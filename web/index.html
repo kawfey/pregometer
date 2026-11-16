@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pregometer</title>
+<meta name="description" content="Compare the test line on home pregnancy tests across several days. Runs in your browser; photos are not uploaded.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+  <header class="top no-print">
+    <h1>Pregometer</h1>
+    <p class="lead">Compare the test line on home pregnancy tests across several days. Add your photos and get a score for each test, matched side-by-side crops, and a report you can save.</p>
+    <p class="privacy"><strong>Your photos stay on this device.</strong> The analysis runs in your browser. Nothing is uploaded.</p>
+  </header>
+
+  <section class="card no-print" id="add">
+    <h2>1. Add photos</h2>
+    <label class="drop" id="drop">
+      <input type="file" id="files" accept="image/*,.heic,.heif" multiple>
+      <span class="drop-main">Choose photos</span>
+      <span class="drop-sub">or drop them here · HEIC, JPEG or PNG · one photo can show several tests</span>
+    </label>
+    <details>
+      <summary>Which tests work, and how to photograph them</summary>
+      <table class="plain">
+        <thead><tr><th>Test</th><th>Looks like</th><th>Must be visible</th></tr></thead>
+        <tbody>
+          <tr><td>Wondfo</td><td>paper strip, orange label</td><td>black MAX bar and the start of the label</td></tr>
+          <tr><td>easy@Home HCG</td><td>paper strip, light pink label</td><td>black MAX bar and the start of the label</td></tr>
+          <tr><td>First Response</td><td>white stick, oval window, pink cap</td><td>the pink cap, on the stick</td></tr>
+        </tbody>
+      </table>
+      <ul>
+        <li>Photograph from straight above, in focus, in even light without glare.</li>
+        <li>Fill a good part of the frame with the test. Tests far in the background are ignored.</li>
+        <li>Use the original photo where you can. Screenshots and copies sent through chat apps lose the date and some detail.</li>
+        <li>Read tests within the time window in their instructions. A line that appears after a test has dried is not a result.</li>
+      </ul>
+    </details>
+  </section>
+
+  <section class="card no-print" id="list-card" hidden>
+    <h2>2. Check the dates</h2>
+    <p class="hint">Rows in the report are ordered by these. Dates come from the photo where it has one; fill in any that are missing.</p>
+    <ul id="photos" class="photos"></ul>
+    <div class="actions">
+      <button id="go" class="primary" disabled>Analyse photos</button>
+      <button id="clear" class="quiet">Remove all</button>
+      <span id="status" class="status" role="status" aria-live="polite"></span>
+    </div>
+    <div id="bar" class="bar" hidden><span></span></div>
+  </section>
+
+  <p id="engine" class="engine no-print" role="status" aria-live="polite"></p>
+
+  <section id="report" class="report" hidden></section>
+
+  <footer class="foot no-print">
+    <p>Not a medical device. It measures how dark a line looks in a photo, which is not the same as a hormone level. See the limits listed in the report.</p>
+    <p>Runs on Pyodide, NumPy, OpenCV, Pillow and libheif, all served from this site. No analytics, no cookies.</p>
+  </footer>
+</main>
+<div id="tip" class="tip" hidden></div>
+<script src="app.js"></script>
+</body>
+</html>
