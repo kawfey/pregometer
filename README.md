@@ -101,3 +101,19 @@ can be served by any static host. Pushing to `main` deploys it to GitHub Pages t
 The deployed site includes Pyodide (MPL-2.0), NumPy (BSD-3-Clause), OpenCV (Apache-2.0),
 Pillow (MIT-CMU) and libheif-js with libheif and libde265 (LGPL-3.0). Their licence texts are
 inside the respective packages.
+
+## License
+
+Copyright (C) 2026 Sterling Mann
+
+This program is free software: you can redistribute it and/or modify it under the terms of
+the GNU Affero General Public License as published by the Free Software Foundation, either
+version 3 of the License, or (at your option) any later version. See [LICENSE](LICENSE).
+
+If you run a modified version as a website, the AGPL requires you to offer its source code
+to the people who use it.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+The bundled components listed above keep their own licences.
