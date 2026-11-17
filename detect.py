@@ -127,7 +127,9 @@ def check_strip(a, B, C, halfw, info):
         return None
     if abs(_rg(mem) - _rg(white)) > 0.2 or abs(_gb(mem) - _gb(white)) > 0.25:
         return None
-    if abs(_rg(bar) - _rg(white)) > 0.5:      # the bar is black, not dark red (a strong control line)
+    # the bar is black, not dark red (a strong control line). Colour is meaningless once the bar is
+    # nearly black, so only test it when there is enough light in it to have one.
+    if _lum(bar) > 0.03 * lw and abs(_rg(bar) - _rg(white)) > 0.5:
         return None
     # the control line must cross the whole strip and be pink: per-row peaks, low percentile
     ctl = band[:, np.abs(u - 1) < 0.045]
@@ -175,7 +177,7 @@ def check_fr(a, Cc, d, unit, info):
     for zone in (med((u > 1.6) & (u < 3.5), np.abs(v) < 0.5), med((u > -5.0) & (u < -2.6), np.abs(v) < 0.5)):
         if not 0.6 < _lum(zone) / _lum(mem) < 1.9:
             return None
-        if abs(_rg(zone) - _rg(mem)) > 0.2 or abs(_gb(zone) - _gb(mem)) > 0.25:
+        if abs(_rg(zone) - _rg(mem)) > 0.3 or abs(_gb(zone) - _gb(mem)) > 0.3:
             return None
     ctl = lin[np.abs(v) < 0.35][:, np.abs(u) < 0.1]
     G = cv2.GaussianBlur(ctl[..., 1], (0, 0), 1.0)
@@ -189,6 +191,31 @@ def check_fr(a, Cc, d, unit, info):
     if len(solid) < 8 or not 5.5 < uu[solid[0]] < 9.0:
         return None
     return dict(brand='fr', lineness=lineness)
+
+
+def _fr_control_beyond(a, Cc, d, unit, chk):
+    """A dark test line can pass every check by itself. The control line then sits 0.7 - 1.0 line
+    lengths farther from the cap; if a line is there, it is the control, so move to it."""
+    ppu, ur, vr = 100, (0.4, 1.3), (-0.3, 0.3)
+    r, _ = rectify(a, Cc, Cc + d, unit, ur, vr, ppu)
+    lin = srgb2lin(r)
+    u = ur[0] + np.arange(lin.shape[1]) / ppu
+    G = cv2.GaussianBlur(lin[..., 1], (0, 0), 1.0).mean(0)
+    base = np.median(G[(u > 0.45) & (u < 0.6)])
+    win = np.flatnonzero((u > 0.65) & (u < 1.05))
+    i = win[np.argmin(G[win])]
+    pk = float(np.median(pinkness(lin[:, max(0, i - 1):i + 2]))) - float(np.median(pinkness(lin[:, (u > 0.45) & (u < 0.6)])))
+    if 1 - G[i] / base < 0.5 * chk['lineness'] or pk < 0.15:
+        return Cc, d, unit, chk
+    try:
+        C2, d2, unit2, info2 = refine_fr(a, Cc + d * unit * u[i], d, unit, max_iter=4)
+    except (LocateError, ValueError, np.linalg.LinAlgError):
+        return Cc, d, unit, chk
+    if abs(info2['Lc_last'] - 1) > 0.12 or abs(unit2 / unit - 1) > 0.25:
+        return Cc, d, unit, chk
+    G2 = cv2.GaussianBlur(srgb2lin(rectify(a, C2, C2 + d2, unit2, (-0.1, 0.1), (-0.35, 0.35), 100)[0])[..., 1], (0, 0), 1.0)
+    lineness = float(np.percentile(1 - G2.min(1) / base, 20))
+    return C2, d2, unit2, dict(chk, lineness=max(lineness, chk['lineness']))
 
 
 # ---------------------------------------------------------------- driver
@@ -262,6 +289,7 @@ def detect(a):
             continue
         chk = check_fr(a, Cc, d, unit, info)
         if chk:
+            Cc, d, unit, chk = _fr_control_beyond(a, Cc, d, unit, chk)
             dets.append(dict(kind='fr', C=Cc, d=d, unit=unit, width=unit, reach=float(Cc @ d),
                              shift=info['shift'], **chk))
     return sorted(_dedupe(dets), key=lambda x: (x['brand'], x['C'][1], x['C'][0]))
