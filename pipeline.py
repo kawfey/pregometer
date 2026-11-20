@@ -9,6 +9,9 @@ from detect import BRAND_NAMES, MEASURED, detect
 from measure import measure_fr, measure_strip
 
 
+MAX_SE = 0.2   # a test whose own uncertainty exceeds 20 score points is not reported
+
+
 def process_photo(a, meta, fname, tests=None, debug_dir=None):
     """a, meta: from common.load(). tests: landmarks to use instead of automatic detection.
 
@@ -38,6 +41,11 @@ def process_photo(a, meta, fname, tests=None, debug_dir=None):
                 t = dict(t, C=np.array(res['control_xy']), d=np.array(res['away_from_cap']), unit=res['unit_px'])
         except LocateError as e:
             notes.append(f'{label}: could not be measured ({e})')
+            continue
+        if res['ratio_se'] > MAX_SE:
+            # the score swings wildly across the line's own length: not a real test line pair
+            # (e.g. a red speck on the table that happened to pass the layout checks)
+            notes.append(f"{label}: found but not measurable (uncertainty +/- {100 * res['ratio_se']:.0f} points); skipped")
             continue
         res.update(id=f"{t['brand']}_{name}_{i}", file=fname, located=how,
                    dt_time=meta.get('dt_time', True), dt_source=meta.get('dt_source'))
